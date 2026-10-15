@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MindAR Image Target Compiler</title>
+  <style>
+    body {
+      background: #0b0c10;
+      color: #c5c6c7;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+    }
+    .card {
+      background: #1f2833;
+      border: 1px solid #45a29e;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    h1 {
+      color: #66fcf1;
+      margin-top: 0;
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+    #status {
+      font-size: 18px;
+      margin: 20px 0;
+      font-weight: 500;
+    }
+    .progress-bar-bg {
+      background: #0b0c10;
+      border-radius: 8px;
+      height: 20px;
+      overflow: hidden;
+      margin: 20px 0;
+      border: 1px solid #45a29e;
+    }
+    #progress-fill {
+      background: linear-gradient(90deg, #45a29e, #66fcf1);
+      width: 0%;
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+    #poster-preview {
+      max-width: 200px;
+      border-radius: 8px;
+      border: 1px solid #66fcf1;
+      margin-top: 15px;
+      box-shadow: 0 4px 16px rgba(102, 252, 241, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>MINDAR TARGET COMPILER</h1>
+    <p>Compiling official Gameathon poster into tracking target</p>
+    
+    <div class="progress-bar-bg">
+      <div id="progress-fill"></div>
+    </div>
+    <div id="status">Initializing...</div>
+    <div id="percentage">0%</div>
+
+    <img id="poster-preview" src="./assets/gameathon-poster.png" alt="Target Poster">
+  </div>
+
+  <script>
+    function sendLog(msg) {
+      console.log(msg);
+      fetch('/client-log?msg=' + encodeURIComponent(msg)).catch(() => {});
+    }
+    window.onerror = function(msg, url, line) {
+      sendLog('GLOBAL ERROR: ' + msg + ' at ' + url + ':' + line);
+    };
+  </script>
+
+  <script type="module">
+    sendLog('Module script starting...');
+
+    import { Compiler } from "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js";
+    sendLog('Compiler imported successfully!');
+
+    async function startCompilation() {
+      const statusEl = document.getElementById('status');
+      const progressFill = document.getElementById('progress-fill');
+      const percentageEl = document.getElementById('percentage');
+
+      try {
+        statusEl.innerText = "Loading target image...";
+        sendLog("Loading poster image...");
+        const img = document.getElementById('poster-preview');
+        if (!img.complete) {
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+          });
+        }
+        sendLog("Image loaded successfully (" + img.naturalWidth + "x" + img.naturalHeight + ")");
+
+        statusEl.innerText = "Initializing MindAR Compiler...";
+        const compiler = new Compiler();
+        sendLog("Compiler instance created");
+
+        statusEl.innerText = "Extracting multi-scale feature points...";
+        await compiler.compileImageTargets([img], (p) => {
+          const percent = p.toFixed(1);
+          progressFill.style.width = percent + "%";
+          percentageEl.innerText = percent + "%";
+          sendLog(`Compilation progress: ${percent}%`);
+        });
+
+        statusEl.innerText = "Exporting compiled .mind binary buffer...";
+        sendLog("Calling compiler.exportData()...");
+        const buffer = await compiler.exportData();
+        sendLog("Compiled buffer size: " + buffer.byteLength + " bytes");
+
+        statusEl.innerText = "Writing gameathon-poster.mind to assets...";
+        const res = await fetch('/save-mind', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream' },
+          body: buffer
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          statusEl.innerText = "TARGET COMPILATION COMPLETE (" + data.bytes + " bytes)";
+          statusEl.style.color = "#66fcf1";
+          percentageEl.innerText = "100% READY";
+          sendLog("Compilation fully complete and verified! Saved to disk.");
+        } else {
+          throw new Error(data.error || "Failed to save .mind target file");
+        }
+      } catch (err) {
+        sendLog("COMPILATION EXCEPTION: " + err.message + "\n" + err.stack);
+        statusEl.innerText = "ERROR: " + err.message;
+        statusEl.style.color = "#ff4444";
+      }
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(startCompilation, 300);
+    });
+  </script>
+</body>
+</html>

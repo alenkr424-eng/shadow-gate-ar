@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Solo Leveling Gate Preview</title>
+    <style>
+      body { margin: 0; background: #030712; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+      canvas { width: 100vw; height: 100vh; }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <script type="module">
+      import * as THREE from 'three';
+      import { ShadowGate } from '/js/gate-mesh.js';
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 2.8);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      document.body.appendChild(renderer.domElement);
+
+      const gate = new ShadowGate();
+      scene.add(gate.group);
+
+      let lastTime = performance.now();
+      function animate() {
+        requestAnimationFrame(animate);
+        const now = performance.now();
+        const dt = (now - lastTime) / 1000;
+        lastTime = now;
+        gate.update(dt);
+        renderer.render(scene, camera);
+      }
+      animate();
+      window._gate = gate;
+      window._renderReady = true;
+    </script>
+  </body>
+</html>

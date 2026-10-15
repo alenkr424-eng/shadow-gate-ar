@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SHADOW GATE — A Gameathon AR Experience</title>
+  <meta name="description" content="A real poster-tracked dark-fantasy WebAR experience. Awaken the ancient dimensional gate.">
+  <meta name="theme-color" content="#07070a">
+
+  <!-- Favicon / Web App Manifest -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%2307070a' stroke='%2300f0ff' stroke-width='4'/><path d='M50 20 L65 50 L50 80 L35 50 Z' fill='%237b2cbf'/></svg>">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./css/styles.css">
+
+  <!-- Import Map for Three.js and MindAR (ES Modules) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+      "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Notice when user opens directly via file:// protocol -->
+  <div id="file-protocol-warning" class="protocol-alert hidden">
+    ⚠️ <strong>FILE PROTOCOL DETECTED:</strong> WebAR and camera streaming require a local server. Please navigate to <a href="http://localhost:3000" style="color:#00f0ff; text-decoration:underline;">http://localhost:3000</a> or <a href="https://localhost:3443" style="color:#00f0ff; text-decoration:underline;">https://localhost:3443</a>!
+  </div>
+
+  <!-- AR Camera & 3D Canvas Container -->
+  <div id="ar-container"></div>
+
+  <!-- STEP 3: Premium Dark-Fantasy Landing Screen -->
+  <div id="landing-screen" class="landing-screen">
+    
+    <div class="landing-card-frame">
+      <div class="title-section">
+        <span class="ar-tag">WebAR Milestone 001</span>
+        <h1 class="main-title">SHADOW GATE</h1>
+        <p class="subtitle">A GAMEATHON AR EXPERIENCE</p>
+      </div>
+
+      <!-- Original Dark-Fantasy Gate Emblem -->
+      <div class="gate-emblem-wrap">
+        <svg class="gate-emblem-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer Demonic Spires -->
+          <path d="M100 10 L115 45 L130 25 L135 60 L160 50 L145 90 L180 95 L155 125 L180 150 L140 160 L150 190 L100 175 L50 190 L60 160 L20 150 L45 125 L20 95 L55 90 L40 50 L65 60 L70 25 L85 45 Z" fill="#14141f" stroke="#7b2cbf" stroke-width="2.5" />
+          
+          <!-- Concentric Arcane Rings -->
+          <circle cx="100" cy="105" r="58" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4 6" opacity="0.8" />
+          <circle cx="100" cy="105" r="46" stroke="#9d4edd" stroke-width="3" />
+          <circle cx="100" cy="105" r="32" stroke="#00f0ff" stroke-width="1.5" />
+
+          <!-- Portal Core Void -->
+          <circle cx="100" cy="105" r="22" fill="#050508" stroke="#00f0ff" stroke-width="2" />
+          
+          <!-- Mystic Runic Glyphs -->
+          <path d="M100 88 L100 122 M83 105 L117 105 M88 93 L112 117 M112 93 L88 117" stroke="#00f0ff" stroke-width="1.8" opacity="0.9" />
+
+          <!-- Crest Skull Horns -->
+          <path d="M85 40 Q100 28 115 40 Q108 52 100 50 Q92 52 85 40 Z" fill="#00f0ff" opacity="0.75" />
+        </svg>
+      </div>
+
+      <div class="instruction-box">
+        <p class="instruction-text">SCAN THE FORBIDDEN GATE</p>
+      </div>
+
+      <div class="action-section">
+        <button id="btn-awaken" class="btn-awaken" aria-label="Awaken The Gate AR Experience">
+          AWAKEN THE GATE
+        </button>
+        <div class="button-row">
+          <button id="btn-view-poster" class="btn-secondary" aria-label="View Target Poster">
+            VIEW TARGET POSTER
+          </button>
+          <button id="btn-mobile-connect" class="btn-secondary btn-highlight" aria-label="Launch on Phone">
+            📱 TEST ON ANDROID
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Live Scanning HUD Overlay -->
+  <div id="scanning-overlay" class="scanning-overlay hidden">
+    <!-- Top Status & Controls Bar -->
+    <div class="hud-top-bar">
+      <div id="status-banner" class="status-banner">
+        <div class="status-dot"></div>
+        <span id="status-text">INITIALIZING CAMERA...</span>
+      </div>
+      <button id="btn-stop-ar" class="btn-stop-ar" aria-label="Stop AR Tracking">
+        STOP AR
+      </button>
+    </div>
+
+    <!-- Center Reticle Alignment Target -->
+    <div class="hud-center">
+      <div id="scanning-reticle" class="scanning-reticle">
+        <div class="scanner-laser"></div>
+        <div class="bracket-tr"></div>
+        <div class="bracket-bl"></div>
+      </div>
+      <div class="hud-bottom-tip">
+        ALIGN POSTER ARTWORK WITHIN RETICLE
+      </div>
+    </div>
+
+    <!-- Bottom Spacer -->
+    <div></div>
+  </div>
+
+  <!-- Target Poster Modal (Convenient for Testing on Phone or Second Device) -->
+  <div id="poster-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="modal-title">TRACKING TARGET POSTER</h2>
+      <p class="modal-desc">
+        Point your phone's camera at this poster artwork or display it on a second monitor / tablet to track the 3D Shadow Gate.
+      </p>
+      <img src="./assets/gameathon-poster.png" alt="Official Gameathon Poster" class="modal-poster-img">
+      <div>
+        <button id="btn-close-poster" class="modal-btn">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Connection Helper Modal -->
+  <div id="mobile-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <h2 class="modal-title">📱 TEST ON MOBILE / ANDROID</h2>
+      <p class="modal-desc">
+        Mobile browsers require a <strong>secure context (HTTPS)</strong> to allow camera streaming. Choose your preferred connection below:
+      </p>
+
+      <div class="connection-options">
+        <div class="connect-card" style="border-color: #00f0ff; background: rgba(0, 240, 255, 0.08);">
+          <div class="connect-badge" style="color: #00f0ff;">⚡ CLOUDFLARE SECURE HTTPS (READY FOR ANDROID)</div>
+          <div class="connect-url" style="color: #00f0ff; font-weight: bold;">https://neural-promising-meetup-capture.trycloudflare.com</div>
+          <div class="connect-hint">Zero setup, trusted SSL certificate, instant camera access on mobile.</div>
+        </div>
+
+        <div class="connect-card">
+          <div class="connect-badge">OPTION 2 (LOCAL WI-FI HTTPS)</div>
+          <div class="connect-url">https://10.66.241.76:3443</div>
+          <div class="connect-hint">Bypass Chrome warning: click "Advanced" &rarr; "Proceed to 10.66.241.76 (unsafe)"</div>
+        </div>
+
+        <div class="connect-card">
+          <div class="connect-badge">OPTION 3 (CHROME USB DEBUGGING)</div>
+          <div class="connect-hint">Forward port <code>3000</code> in <code>chrome://inspect</code> & open <code>http://localhost:3000</code> on phone.</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.2rem;">
+        <button id="btn-close-mobile" class="modal-btn">GOT IT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMERA PERMISSION BLOCKED MODAL -->
+  <div id="camera-blocked-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 460px; border-color: #ef233c; box-shadow: 0 0 30px rgba(239, 35, 60, 0.4);">
+      <div style="font-size: 2.4rem; margin-bottom: 0.5rem;">📷 🚫</div>
+      <h2 class="modal-title" style="color: #ef233c;">CAMERA ACCESS BLOCKED</h2>
+      
+      <p class="modal-desc" style="text-align: left; font-size: 0.95rem; line-height: 1.6;">
+        Your browser has currently blocked camera access on this page. To enable tracking:
+      </p>
+
+      <div class="guide-steps">
+        <div class="guide-step">
+          <span class="step-num">1</span>
+          <span>Look at the <strong>top-left of your browser address bar</strong> (next to the URL).</span>
+        </div>
+        <div class="guide-step">
+          <span class="step-num">2</span>
+          <span>Click the <strong>Camera icon with the red X</strong> (or "Camera not allowed").</span>
+        </div>
+        <div class="guide-step">
+          <span class="step-num">3</span>
+          <span>Select <strong>"Always allow..."</strong> and click <strong>Done</strong>.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.8rem; justify-content: center; margin-top: 1.2rem;">
+        <button id="btn-retry-camera" class="modal-btn" style="border-color: #00f0ff; background: rgba(0, 240, 255, 0.2);">
+          🔄 TRY AGAIN
+        </button>
+        <button id="btn-dismiss-blocked" class="modal-btn" style="border-color: #555;">
+          DISMISS
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- General Error Modal -->
+  <div id="error-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="modal-title" style="color: #ef233c;">AR SENSOR NOTICE</h2>
+      <p id="error-message" class="modal-desc">
+        Camera access was denied or WebGL could not be initialized. Please verify camera permissions in your mobile browser.
+      </p>
+      <button id="btn-close-error" class="modal-btn">DISMISS</button>
+    </div>
+  </div>
+
+  <!-- JavaScript AR Controller Module -->
+  <script type="module" src="./js/ar-controller.js"></script>
+
+</body>
+</html>

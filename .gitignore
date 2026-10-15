@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# SSL Keys & Certificates
+*.pem
+*.key
+*.cert
+
+# Cloudflare / Tunnel temporary runtime files
+public/tunnel-url.txt
+tunnel-url.txt
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

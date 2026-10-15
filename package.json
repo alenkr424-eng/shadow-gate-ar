@@ -1,0 +1,13 @@
+{
+  "name": "shadow-gate-ar",
+  "version": "1.0.0",
+  "description": "Shadow Gate AR - Dark Fantasy WebAR Experience",
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "localtunnel": "^2.0.2",
+    "puppeteer-core": "^25.14.0",
+    "selfsigned": "^5.5.0"
+  }
+}
